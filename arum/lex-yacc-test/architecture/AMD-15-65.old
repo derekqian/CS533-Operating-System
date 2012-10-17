@@ -1,0 +1,163 @@
+#
+# An event file in special format for performance counting events that
+# can be counted on processors of type: vendor AMD, family 15, model 65.
+#
+# There is a max number of register types used by Arum to construct the
+# event lists.  This max number is defined in Arch.h.  In the event 
+# specification a register index is a number between 0 and (MAX - 1).  These
+# indices indicate the register type.  For example, in the architecture
+# this file pertains to, there are two types of registers used in 
+# performance counting: PMCs, and ESCRs.  Each of these types maps to
+# an index in a register array, as follows PMCS:0, ESCRs:1. 
+#
+# The specification for a register is given in Arch.h.  A register
+# contains five parts: type, name, number, address, and a pointer to another
+# register that can be used by a specific event. A list of registers, with each
+# register connected by its next pointer, forms a register set.  An Event
+# contains one or more register sets.  An event can be configured for counting
+# using a register set.
+#
+# An example of an event and its register sets for this architecture is
+# global_power_events. There are four different ways to program this event on 
+# this architecture; and so there are four register sets.
+#
+# The events listed are from the BIOS and Kernel Developer's Guide for the
+# AMD Athlon 64 and AMD Opteron Processors.  This guide has AMD publication 
+# number 26094 and can be found on the AMD website
+#
+# The pairing of PMC registers and ESCR registers can be found in Table A-6
+# of the AMD x86-64 Architecture Programmer's Manual, Vol. 2.  This manual
+# has AMD publication number 24593 and can be found on the AMD website.
+
+#1.
+#The number of operations dispatched to the FPU execution pipelines
+#evt mask: 00h
+!dispatched_fpu_ops
+r1:PerfEvtSel0/0/C0010000h$$$r0:PerfCtr0/0/C0010004h
+r1:PerfEvtSel1/1/C0010001h$$$r0:PerfCtr1/1/C0010005h
+r1:PerfEvtSel2/2/C0010002h$$$r0:PerfCtr2/2/C0010006h
+r1:PerfEvtSel3/3/C0010003h$$$r0:PerfCtr3/3/C0010007h
+
+#2.
+#The number of accesses to the data cache for load and store references
+#evt mask: 40h
+!dcache_accesses
+r1:PerfEvtSel0/0/C0010000h$$$r0:PerfCtr0/0/C0010004h
+r1:PerfEvtSel1/1/C0010001h$$$r0:PerfCtr1/1/C0010005h
+r1:PerfEvtSel2/2/C0010002h$$$r0:PerfCtr2/2/C0010006h
+r1:PerfEvtSel3/3/C0010003h$$$r0:PerfCtr3/3/C0010007h
+
+#3.
+#The number of data cache references which missed in the data cache.
+#evt mask: 41h
+!dcache_misses
+r1:PerfEvtSel0/0/C0010000h$$$r0:PerfCtr0/0/C0010004h
+r1:PerfEvtSel1/1/C0010001h$$$r0:PerfCtr1/1/C0010005h
+r1:PerfEvtSel2/2/C0010002h$$$r0:PerfCtr2/2/C0010006h
+r1:PerfEvtSel3/3/C0010003h$$$r0:PerfCtr3/3/C0010007h
+
+#4.
+#The number of requests that miss in the L2 cache
+#evt mask: 7Eh
+!L2_cache_misses
+r1:PerfEvtSel0/0/C0010000h$$$r0:PerfCtr0/0/C0010004h
+r1:PerfEvtSel1/1/C0010001h$$$r0:PerfCtr1/1/C0010005h
+r1:PerfEvtSel2/2/C0010002h$$$r0:PerfCtr2/2/C0010006h
+r1:PerfEvtSel3/3/C0010003h$$$r0:PerfCtr3/3/C0010007h
+
+#5.
+#The number of instruction cache accesses by the instruction fetcher
+#evt mask: 80h
+!icache_fetches
+r1:PerfEvtSel0/0/C0010000h$$$r0:PerfCtr0/0/C0010004h
+r1:PerfEvtSel1/1/C0010001h$$$r0:PerfCtr1/1/C0010005h
+r1:PerfEvtSel2/2/C0010002h$$$r0:PerfCtr2/2/C0010006h
+r1:PerfEvtSel3/3/C0010003h$$$r0:PerfCtr3/3/C0010007h
+
+#6.
+#The number of instruction cache misses
+#evt mask: 81h
+!icache_misses
+r1:PerfEvtSel0/0/C0010000h$$$r0:PerfCtr0/0/C0010004h
+r1:PerfEvtSel1/1/C0010001h$$$r0:PerfCtr1/1/C0010005h
+r1:PerfEvtSel2/2/C0010002h$$$r0:PerfCtr2/2/C0010006h
+r1:PerfEvtSel3/3/C0010003h$$$r0:PerfCtr3/3/C0010007h
+
+#7.
+#The number of instruction fetches that miss in the L1 ITLB but
+#hit in the L2 ITLB
+#evt mask: 84h
+!ITLB_L1_miss_L2_hit
+r1:PerfEvtSel0/0/C0010000h$$$r0:PerfCtr0/0/C0010004h
+r1:PerfEvtSel1/1/C0010001h$$$r0:PerfCtr1/1/C0010005h
+r1:PerfEvtSel2/2/C0010002h$$$r0:PerfCtr2/2/C0010006h
+r1:PerfEvtSel3/3/C0010003h$$$r0:PerfCtr3/3/C0010007h
+
+#8.
+#The number of instruction fetches that miss in both L1 and L2 ITLBs
+#evt mask: 85h
+!ITLB_L1_L2_miss
+r1:PerfEvtSel0/0/C0010000h$$$r0:PerfCtr0/0/C0010004h
+r1:PerfEvtSel1/1/C0010001h$$$r0:PerfCtr1/1/C0010005h
+r1:PerfEvtSel2/2/C0010002h$$$r0:PerfCtr2/2/C0010006h
+r1:PerfEvtSel3/3/C0010003h$$$r0:PerfCtr3/3/C0010007h
+
+
+#9.
+#The number of instructions retired, excluding exceptions and interrupts
+#evt mask: C0h
+!retired_instructions
+r1:PerfEvtSel0/0/C0010000h$$$r0:PerfCtr0/0/C0010004h
+r1:PerfEvtSel1/1/C0010001h$$$r0:PerfCtr1/1/C0010005h
+r1:PerfEvtSel2/2/C0010002h$$$r0:PerfCtr2/2/C0010006h
+r1:PerfEvtSel3/3/C0010003h$$$r0:PerfCtr3/3/C0010007h
+
+#10.
+#The number of micro-ops retired, including exceptions and interrupts
+#evt mask: C1h
+!retired_uops
+r1:PerfEvtSel0/0/C0010000h$$$r0:PerfCtr0/0/C0010004h
+r1:PerfEvtSel1/1/C0010001h$$$r0:PerfCtr1/1/C0010005h
+r1:PerfEvtSel2/2/C0010002h$$$r0:PerfCtr2/2/C0010006h
+r1:PerfEvtSel3/3/C0010003h$$$r0:PerfCtr3/3/C0010007h
+
+
+#11.
+#The number of processor cycles where the decoder has nothing to dispatch
+#evt mask: D0h
+!decoder_empty
+r1:PerfEvtSel0/0/C0010000h$$$r0:PerfCtr0/0/C0010004h
+r1:PerfEvtSel1/1/C0010001h$$$r0:PerfCtr1/1/C0010005h
+r1:PerfEvtSel2/2/C0010002h$$$r0:PerfCtr2/2/C0010006h
+r1:PerfEvtSel3/3/C0010003h$$$r0:PerfCtr3/3/C0010007h
+
+
+#12.
+#The number of processor cycles where the decoder is stalled for any reason
+#evt mask: D1h
+!dispatch_stalls
+r1:PerfEvtSel0/0/C0010000h$$$r0:PerfCtr0/0/C0010004h
+r1:PerfEvtSel1/1/C0010001h$$$r0:PerfCtr1/1/C0010005h
+r1:PerfEvtSel2/2/C0010002h$$$r0:PerfCtr2/2/C0010006h
+r1:PerfEvtSel3/3/C0010003h$$$r0:PerfCtr3/3/C0010007h
+
+
+#13.
+#The number of memory accesses performed by the local DRAM controller
+#evt mask: E0h
+!DRAM_accesses
+r1:PerfEvtSel0/0/C0010000h$$$r0:PerfCtr0/0/C0010004h
+r1:PerfEvtSel1/1/C0010001h$$$r0:PerfCtr1/1/C0010005h
+r1:PerfEvtSel2/2/C0010002h$$$r0:PerfCtr2/2/C0010006h
+r1:PerfEvtSel3/3/C0010003h$$$r0:PerfCtr3/3/C0010007h
+
+#14
+#The number of page table overflows in the local DRAM controller
+#evt mask: E1h
+!page_table_ovf
+r1:PerfEvtSel0/0/C0010000h$$$r0:PerfCtr0/0/C0010004h
+r1:PerfEvtSel1/1/C0010001h$$$r0:PerfCtr1/1/C0010005h
+r1:PerfEvtSel2/2/C0010002h$$$r0:PerfCtr2/2/C0010006h
+r1:PerfEvtSel3/3/C0010003h$$$r0:PerfCtr3/3/C0010007h
+
+

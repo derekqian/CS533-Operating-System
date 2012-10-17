@@ -1,0 +1,505 @@
+// events.cpp : Defines the entry point for the console application.
+//
+
+//#include "stdafx.h"     //very important this is the first include (vis studio)
+#include <stdio.h>
+#include <iostream>
+#include <fstream>
+#include <cctype>
+#include <string.h>
+//#include "events-2.h"
+//#include "arch-2.h"
+#include "Events.h"
+#include "Arch.h"
+
+using namespace std; 
+
+
+int main(int argc, char * argv[])
+{
+
+   //char * name;
+   //char temp[25];
+   struct ArchId aid = {"GenuineIntel", 15, 6};
+
+   //printf ("Hello World!\n");
+   //cout << "Enter name...\n";
+   //cin >> temp;
+   //name = new char[strlen(temp) + 1];
+   //strcpy (name, temp);
+   //printf ("Hello %s!\n", name);
+   Events events(&aid);
+   events.printEvents();
+   //events.lookupEventByName("instructions_completed");
+   //events.lookupEventByName("instructions_on_vacation");
+   //events.lookupEventByName("global_power_events");
+   return 0;
+}
+
+Events::Events(const struct ArchId * thatAid)
+{
+   memset(this->archStr, '\0', MAX_ARCH_FILE_LEN);
+   this->head = this->tail = NULL;
+   this->count = 0;
+   strcpy(this->aid.vendor, thatAid->vendor);
+   this->aid.model = thatAid->model;
+   this->aid.family = thatAid->family;
+   this->createArchStr(this->archStr); 
+ 
+#ifdef DEBUG_EVENT     
+   printf ("Events Instantiation of vendor %s family %d model %d!\n", 
+           thatAid->vendor, thatAid->family, thatAid->model);
+   printf ("Architecture String: %s\n", this->archStr);
+#endif
+
+   Arch archie(this->archStr); 
+   //read file
+   if (archie.readFile()){
+       printf ("file read!\n");
+   }
+   //archie.printNodes();
+   this->walkArchList(archie);
+   printf ("There are %d archie nodes\n", archie.getCount());
+
+   //this->addNode("global_power_events");
+   //this->addNode("instructions_retired");
+   //this->addNode("instructions_completed");
+
+   printf ("Resetting archie iterator...\n");
+   archie.resetIterator();
+   while (archie.getItNesting() == 0) {
+      this->superAddNode(archie);
+   }
+   
+}
+
+void
+Events::walkArchList(const Arch & a)
+{
+  a.printNodes();
+}
+
+bool 
+Events::addNode(const char *data)
+{
+    bool rv;
+
+    EventNode * add = new EventNode;
+    if (add == NULL) { // no memory
+        rv = false;
+    } else {
+        add->name = new char[strlen(data+1)];
+        strcpy(add->name, data);
+        //add->registers = NULL;
+        add->registers[PMC].name = "Bob";
+        //add->registers = new RegNode[MAX_REG_TYPES];
+        add->next = NULL;
+        this->count++;
+        if (this->head == NULL) {
+            this->head = add;
+        } else {
+            this->tail->next = add;
+        }
+        this->tail = add;
+        rv = true;
+    }
+    return rv;
+}
+
+//This version of addNode adds event nodes based on
+//the architecture specification
+bool 
+Events::superAddNode (Arch & a)
+{
+   bool rv;
+   int currNest, nextNest;
+   char tempName[MAX_REG_NAME_LEN];
+   int regType = -1, regNumber = -1;
+   unsigned long regAddr = 0;
+   
+   if (a.getItNesting() != 0) {  //nesting level of current arch node 
+                                 //is not at the Event name level
+      return false;
+ 
+   }
+   currNest = 0;
+   EventNode * add = new EventNode;
+   if (add == NULL) { //no memory
+      rv = false;
+   } else {
+      add->name = new char[30];
+      memset(add->name, '\0', 30);
+      a.getItName(add->name);
+      printf ("SuperAddNode: Event name: %s\n", add->name);
+      add->next = NULL;
+      this->count++;
+      if (this->head == NULL) {
+         this->head = add;
+      } else {
+         this->tail->next = add;
+      }
+      this->tail = add;
+
+      //set up registers
+      RegNode * dummy = new RegNode; 
+      if (!dummy) {
+         rv = false;
+      } else {
+         rv = this->fillRegNode(a, dummy, currNest);
+      }      
+
+/****************
+      while ( a.getNextItNesting() != E_NULL_NODE ) {
+         memset(tempName, '\0', MAX_REG_NAME_LEN);
+         a.incrementIterator();         
+         if (a.getItNesting() == 0) {
+            break;
+         }
+         a.getItName(tempName);
+         a.getItType(regType);
+         if (!a.getItNumber(regNumber)) {
+            printf ("getItNumber failed\n");
+         }
+         a.getItAddr(regAddr);
+         printf ("type:%d  name:%s  number:%d  addr:0x%8.8lx\n",
+                 regType, tempName, regNumber, regAddr);
+
+         a.printIterator();
+      }
+*****************/
+
+      //if (a.incrementIterator() == OK) { 
+      //   printf ("Entry Reg = %d and Nesting = %d\n", 
+      //            a.getItEntryReg(), a.getItNesting());
+      //   if (a.getNextItEntryReg() != E_NULL_NODE) {
+      //      printf ("Next Entry Reg = %d and Next Nesting = %d\n",
+      //              a.getNextItEntryReg(), a.getNextItNesting());
+      //   }
+      //}
+   }
+   printf ("SuperAddNode returning\n");
+   return rv;
+
+}
+
+bool 
+Events::fillRegNode (Arch & a, struct RegNode * r, int currLevel)
+{
+   bool rv;
+   char tempName[MAX_REG_NAME_LEN];
+   int regType = -1, regNumber = -1;
+   unsigned long regAddr = 0;
+   int nextLevel = -1;
+   printf("currLevel = %d\n",currLevel);
+   if (currLevel == 0) {  //At top of an event node
+      printf("Current Event Node: %s\n", this->tail->name);
+      nextLevel = a.getNextItNesting();     //peek ahead 
+      if (nextLevel == currLevel + 1) {     //if next is an associate
+         a.incrementIterator();             //increment Arch iterator
+         currLevel ++;                      //increment level       
+         //if (a.getItNesting() == 0) {     // dont need
+         //   break;
+         //}
+         memset(tempName, '\0', MAX_REG_NAME_LEN);
+         a.getItName(tempName);
+         a.getItType(regType);
+         if (!a.getItNumber(regNumber)) {
+            printf ("getItNumber failed\n");
+         }
+         a.getItAddr(regAddr);
+         printf ("   type:%d  name:%s  number:%d  addr:0x%8.8lx\n",
+                 regType, tempName, regNumber, regAddr);
+         this->tail->entryReg = regType;
+         this->tail->registers[regType].rType = regType;  //fill in entry point register
+         this->tail->registers[regType].number = regNumber;
+         this->tail->registers[regType].name = new char[strlen(tempName) + 1];
+         memset(this->tail->registers[regType].name, '\0', strlen(tempName) + 1);
+         strcpy(this->tail->registers[regType].name, tempName);
+         this->tail->registers[regType].addr = regAddr;
+         this->tail->registers[regType].associates = NULL;
+         this->tail->registers[regType].previous = NULL;
+         this->tail->registers[regType].next = NULL;
+         //a.printIterator();
+         //peek ahead - if associate, increment iterator and currLev, call self
+         nextLevel = a.getNextItNesting();
+         if (nextLevel == currLevel + 1) {   //next is an associate
+            printf ("   Begin recursive call to fillRegNode assoc: nextLevel:%d == currLevel:%d + 1\n",
+                    nextLevel, currLevel);
+            a.incrementIterator();
+            currLevel++;
+            RegNode * assocA = new RegNode;
+            assocA->previous = &(this->tail->registers[regType]);  //point to previous
+            assocA->associates = NULL;                             //set associates to null
+            this->tail->registers[regType].associates = assocA;    //set previous' associates 
+            this->fillRegNode(a, assocA, currLevel);               //call self with new associate and level
+         } else if ((nextLevel < currLevel) && (nextLevel != 0)){  //a previous register's next
+
+         } else if ((nextLevel == currLevel) && (nextLevel != 0)) { //this register's next
+
+         } else if (nextLevel == 0) {  //reached the end of an event
+
+         } else {}
+         rv = true;
+      } else { // not associate
+
+         rv = true;
+      }
+   } else {                           
+      // currLevel > 0 -- within a register list 
+      // the previous link is already set, so fill out the easy stuff 
+      // then look to see if there are associates
+      printf("\tcurrLevel:%d > 0 previous node is %s\n",currLevel,r->previous->name);
+      memset(tempName, '\0', MAX_REG_NAME_LEN);
+      a.getItName(tempName);
+      a.getItType(regType);
+      if (!a.getItNumber(regNumber)) {
+         printf ("getItNumber failed\n");
+      }
+      a.getItAddr(regAddr);
+      printf ("\t   type:%d  name:%s  number:%d  addr:0x%8.8lx\n",
+              regType, tempName, regNumber, regAddr);
+      r->rType = regType;                        //fill in register
+      r->number = regNumber;
+      r->name = new char[strlen(tempName) + 1];
+      memset(r->name, '\0', strlen(tempName) + 1);
+      strcpy(r->name, tempName);
+      r->addr = regAddr;
+      r->associates == NULL;
+      r->next = NULL;
+
+#ifdef DEBUG_EVENT
+      printf ("\tCurrent node:  type:%d name:%s number:%d addr:0x%8.8lx\n",
+              r->rType, r->name, r->number, r->addr);
+      if (r->previous == NULL){
+         printf ("\tPrevious node is null\n");
+      } else { 
+         printf ("\tPrevious node: type:%d name:%s number:%d addr:0x%8.8lx\n",
+                  r->previous->rType, r->previous->name, 
+                  r->previous->number, r->previous->addr);
+      } 
+#endif      
+      //peek ahead - if associate, increment iterator and currLev, call self
+      nextLevel = a.getNextItNesting();
+      if (nextLevel == currLevel + 1) {   //next is an associate
+         printf ("   Begin recursive call to fillRegNode assoc: nextLevel:%d == currLevel:%d + 1\n",
+                 nextLevel, currLevel);
+         a.incrementIterator();
+         currLevel++;
+         RegNode * assocB = new RegNode;  //create new associate
+         assocB->previous = r;            //point to previous
+         assocB->associates = NULL;       //set new's associates to NULL (for good measure)
+         r->associates = assocB;          //set previous' associates
+         this->fillRegNode(a, assocB, currLevel);  //call self with new associate and level
+      
+      } else if ((nextLevel < currLevel) && (nextLevel != 0)){  //a previous register's next
+         printf("\tBegin recursive call to fillRegNode next:");
+         printf("\tnextLevel:%d < currLevel:%d\n", nextLevel, currLevel);
+         //walk up the list; decrement currLevel at each step; when currLevel == nextLevel
+         //this is the node whose next pointer should be filled in by the new node.
+         a.incrementIterator();           //increment arch iterator
+         RegNode * nextB = new RegNode;
+         //RegNode * rTemp = r;             //set up an iterator
+         RegNode * rTemp = new RegNode;
+         rTemp = r;
+         while (currLevel != nextLevel) {
+            nextB = rTemp->previous;      //set nextB to previous
+            rTemp = rTemp->previous;      //set iterator to its previous
+            currLevel--;                  //decrement currLevel
+         }
+         printf("\tname of node whose next to fill: %s\n", rTemp->name);
+         rTemp->next = nextB;             //set the found node's next pointer
+         nextB->previous = rTemp;         //set nextB's previous
+         printf("\tname of new node's previous: %s\n", nextB->previous->name);
+         this->fillRegNode(a, nextB, currLevel);   //call self with new next and level
+      } else if ((nextLevel == currLevel) && (nextLevel != 0)) { //this register's next
+         printf("\tnextLevel:%d == currLevel:%d\n", nextLevel, currLevel);
+      } else if (nextLevel == 0) {  //reached the end of an event
+	      printf("\tnextLevel:%d == event node level\n", nextLevel, currLevel);
+      } else {}
+
+      rv = true;
+
+   }
+   return rv;
+
+}
+
+void
+Events::createArchStr(char * archStr)
+{
+   int n;
+   memset (archStr, '\0', MAX_ARCH_FILE_LEN);
+   if (strcmp(this->aid.vendor,  INTEL_VENDOR_STR ) == 0) {
+      n = sprintf (archStr, "Intel-%d-%d", this->aid.family, 
+                   this->aid.model);
+   } else if (strcmp(this->aid.vendor, AMD_VENDOR_STR) == 0) {
+      n = sprintf (archStr, "AMD-%d-%d", this->aid.family, 
+                   this->aid.model);
+   } else {
+
+   }
+}
+
+
+bool
+Events::removeNode()
+{
+    bool rv;
+
+    if (this->head == NULL) {
+        rv = false;
+    } else {
+        EventNode * temp = this->head;
+        this->head = this->head->next;
+        delete temp;
+        this->count--;
+        if (this->count == 0) {
+            this->tail = NULL;
+        }
+        rv = true;
+    }
+    return rv;
+}
+
+Events::~Events()
+{
+}
+
+bool
+Events::isEmpty() const
+{
+   bool rv;
+
+   if (this->count > 0) {
+      rv = false;
+   } else {
+      rv = true;
+   }
+   return rv;
+}
+
+
+
+int
+Events::getCount() const
+{
+   return this->count;
+}
+
+
+bool 
+Events::lookupEventByName(const char * name)
+{
+   bool found = false;
+
+   EventNode * iterator = this->head;
+   while (iterator != NULL) {
+      if (strcmp(name,iterator->name) == 0) {
+         found = true;
+         break;
+      }
+      iterator = iterator->next;
+   }
+   printf ("Event %s found status: %d\n", name, (int)found);
+   return found;
+}
+
+void 
+Events::printEvents()
+{
+    printf ("Events:\n");
+    if (!this->isEmpty()) {
+        EventNode * iterator = this->head;
+        while (iterator != NULL) {
+            printf ("%s has registers:\n", iterator->name);
+            RegNode * rit = new RegNode;
+            printEventRegisterList(iterator,rit,0);
+            iterator = iterator->next;
+        }       
+    } else {
+        printf ("Event List is empty\n");
+    }
+    
+}
+
+void 
+Events::printEventRegisterList(EventNode * e, RegNode * r, int currLevel)
+{
+   int i = 0;
+   int saveLevel;
+   if(currLevel == 0) {             //at top of an event node
+      if (e->registers[e->entryReg].associates != NULL){
+         printf ("   Name:%s  Type:%d  Number:%d  Addr:0x%8.8lx\n",
+              e->registers[e->entryReg].name, e->registers[e->entryReg].rType,
+              e->registers[e->entryReg].number, e->registers[e->entryReg].addr);
+
+          //print associates
+          r = e->registers[e->entryReg].associates;
+          saveLevel = currLevel;
+          currLevel ++;
+          while (i != currLevel) {
+             printf("\t");
+             i++;
+          } 
+          printf("Name:%s  Type:%d  Number:%d  Addr:0x%8.8lx\n",
+                 r->name, r->rType, r->number, r->addr);
+          if (r->associates != NULL) {
+             this->printEventRegisterList(e, r, currLevel);
+          } else {
+             printf ("from assoc -- associates null\n");
+          }
+      } else {
+         printf("top-lev: associates null\n");
+      }
+      currLevel = saveLevel;
+      if (e->registers[e->entryReg].next != NULL) {
+         printf ("   Name:%s  Type:%d  Number:%d  Addr:0x%8.8lx\n",
+           e->registers[e->entryReg].name, e->registers[e->entryReg].rType,
+           e->registers[e->entryReg].number, e->registers[e->entryReg].addr);
+         //print next
+         r = e->registers[e->entryReg].next;
+         saveLevel = currLevel;
+         currLevel ++;
+         while (i != currLevel) {
+            printf("\t");
+            i++;
+         }
+         printf("Name:%s  Type:%d  Number:%d  Addr:0x%8.8lx\n",
+                r->name, r->rType, r->number, r->addr);
+         if (r->associates != NULL) {
+            this->printEventRegisterList(e, r, currLevel);
+         } else {
+            printf ("from next -- associates null\n");
+         }
+      } else {
+         printf ("top-lev: next null\n");
+      }
+   } else if (currLevel > 0) {       //within registers of an event node
+      if (r->associates != NULL) {
+         r = r->associates;
+         currLevel ++; 
+         i = 0;
+         while (i != currLevel) {
+            printf("\t");
+            i++;
+         } 
+         printf ("Name:%s  Type:%d  Number:%d  Addr:0x%8.8lx\n",
+                r->name, r->rType, r->number, r->addr);
+         if (r->associates != NULL){
+            this->printEventRegisterList(e, r, currLevel);
+         } else {
+            currLevel ++;
+            i = 0;
+            while (i != currLevel) {
+               printf("\t");
+               i++;
+            }
+            printf ("associates null\n");
+         }
+      }
+      if (r->next != NULL) {
+         printf("a next is not null\n");
+      }
+   } else {
+   }
+}

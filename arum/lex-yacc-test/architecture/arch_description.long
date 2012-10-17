@@ -1,0 +1,294 @@
+# This is a performance counter configuration file.  Currently, this file
+# shows examples for two architectures: and AMD architecture and an Intel
+# architecture.  Other architectures can be added using the format.
+#
+# An architecture specification contains architecture identifying information
+# and information about how to configure registers for hardware performance
+# counting. Things that can be counted in hardware are called events.
+#
+# Architecture identifying information:
+#    internal name	for example "woodcrest"
+#
+#    vendor		as returned by CPUID
+#
+#    family		as returned by CPUID
+#
+#    model		as returned by CPUID
+#    
+# Event configuration information:
+#    counter size	the size, in bits, of the performance counters
+#
+#    non-counter types	these are the types of registers, excluding the
+#			performance counter type (PMC) that are used
+#                       to successfully configure event counting. 
+#			Currently there are two types: Event Selection
+#                       Configuration Registers (ESCR) and Counter Control
+#			Configuration Registers (CCCR).
+#
+#    enable type	The register type (ESCR, CCCR) that is used to start
+#			counting.
+#
+#    enable config	The bit(s) that are set to 1 to start counting.  For
+#			example, if bit 12 in a 32 bit register is set to
+# 			1 to start counting, then the enable configuration is
+#			0x00001000h.
+#
+# Event specification information:
+#    event name		a name for the event
+#
+#    event description	a description of the event
+#
+#    register sets	each register set contains the registers and 
+#			register configuration information necessary to 
+#			configure the event for counting.  Often, an
+#			event has more than one register set.
+#
+#    register		a register is an element of a register set. A register
+#			has a name, a register type (PMC, ESCR, CCCR),
+#			a number, an address, and a default configuration.
+#
+#    reg. name		In the specs. given here, we use the names as given by 
+#			the architecture manuals, but it is not a requirement
+#			to name registers by this method.
+#
+#    reg. type		must be a valid register type (PMC, ESCR, CCCR)
+#
+#    reg. number	In the specs. given here, we use the numbers as given 
+#			by the architecture manuals. Register numbers must
+#			be unique within a register type.  For example, for
+#			all registers of type PMC, only one has register
+#			number 0.
+#
+#    reg. addr		The memory address of the register.  These come 
+#                       directly from the architecture manuals.
+#
+#    reg. config	The initial configuration of the register as it 
+#			relates to the event.  The initial configuration
+#                       does not have to be explicitly specified, but if it
+#			is not given, the register will be zeroed. The 
+#			configuration of the register that will eventually be 
+#			enabled by the "enable config" must be given as the
+#			disabled configuration (meaning that there are zeros
+#                       in the enable positions).
+#                        
+#         
+# NOTE: This version of description lists all the registers up front so that
+# they can be referred to by name in the event listings.
+# 
+# The first architecture specification is for an AMD architecture with
+# vendor AuthenticAMD, family 15, model 65.
+#
+# The events listed are from the BIOS and Kernel Developer's Guide for the
+# AMD Athlon 64 and AMD Opteron Processors.  This guide has AMD publication 
+# number 26094 and can be found on the AMD website
+#
+# The pairing of PMC registers and ESCR registers can be found in Table A-6
+# of the AMD x86-64 Architecture Programmer's Manual, Vol. 2.  This volume
+# also contains general information about hardware performance counting. This 
+# manual has AMD publication number 24593 and can be found on the AMD website.
+#
+
+
+arch "internalName" "AuthenticAMD" 15 65 {
+   size_ctr	48;               #Size of counters
+   type_nonctr	ESCR;             #This arch uses ESCR non-counter
+                                  #registers in performance counting
+
+   type_enable	ESCR;             #The type of register used to start counting
+   conf_enable	0x00400000;       #The bits that are to be set to start counting
+
+   ## A listing of all the registers used in this architecture for performance
+   ## counting.
+   ## register "name" REGTYPE number addr;
+   register "PerfEvtSel0" ESCR 0 0xC0010000;
+   register "PerfEvtSel1" ESCR 1 0xC0010001; 
+   register "PerfEvtSel2" ESCR 2 0xC0010002;
+   register "PerfEvtSel3" ESCR 3 0xC0010003;
+   register "PerfCtr0"    PMC  0 0xC0010004;
+   register "PerfCtr0"    PMC  1 0xC0010005;
+   register "PerfCtr0"    PMC  2 0xC0010006;
+   register "PerfCtr0"    PMC  3 0xC0010007;
+
+   # an event set contains the register sets that can be used to configure
+   # each of the events listed in the event set.  The events follow the register
+   # sets listing.
+   event_set {
+      reg_set "PerfEvtSel0", "PerfCtr0";
+      reg_set "PerfEvtSel1", "PerfCtr1";
+      reg_set "PerfEvtSel2", "PerfCtr2";
+      reg_set "PerfEvtSel3", "PerfCtr3"; 
+
+      ##The events that follow can each be configured using any one of the
+      ##above register sets.
+      ## event "name" "description" [[conf_escr val] [conf_pmc val] [conf_cccr val]]+;
+      event "dcache_accesses"  
+         "The number of accesses to the data cache for load and store references"
+         conf_escr 0x000B0028 conf_pmc 0x0;
+
+      event "dcache_misses" 
+         "The number of data cache references which missed in the data cache."
+         conf_escr 0x000B0029 conf_pmc 0x0;
+
+      event "retired_instructions" 
+         "Number of instructions retired, excluding exceptions and interrupts"
+         conf_escr 0x000B00C0 conf_pmc 0x0;	
+   }
+};
+
+
+# The second architecture specification is for and Intel arch. with 
+# vendor GenuineIntel, family 15, model 6.
+#
+# Information about this architecture and the events can be found in
+# Intel Architecture Manual: Intel 64 and IA-32 Architectures Software 
+# Developer's Manual, Vol 3
+#
+
+
+arch "netburstXeon" "GenuineIntel" 15 6 {
+   size_ctr     40;               #size of counters
+   type_nonctr  ESCR, CCCR;       #this architecture uses non-counter register
+                                  #types of ESCRs and CCCRs to configure an 
+                                  #event for counting
+   type_enable  CCCR;             #The type of register used to start counting
+   conf_enable  0x00001000;       #The bits that are to be set to start counting
+
+   ## A listing of all registers used in this architecture
+   ## register "name" REGTYPE number addr; 
+   ## NOTE: the register numbers for the PMC and CCCR types come from the 
+   ##       architecture manual; the register numbers for the ESCR type
+   ##       are not from the manual.
+   register "MSR_BPU_COUNTER0"   PMC 0   0x300;
+   register "MSR_BPU_COUNTER1"   PMC 1   0x301;
+   register "MSR_BPU_COUNTER2"   PMC 2   0x302;
+   register "MSR_BPU_COUNTER3"   PMC 3   0x303;
+   register "MSR_MS_COUNTER0"    PMC 4   0x304;
+   register "MSR_MS_COUNTER1"    PMC 5   0x305;
+   register "MSR_MS_COUNTER2"    PMC 6   0x306;
+   register "MSR_MS_COUNTER3"    PMC 7   0x307;
+   register "MSR_FLAME_COUNTER0" PMC 8   0x308;
+   register "MSR_FLAME_COUNTER1" PMC 9   0x309;
+   register "MSR_FLAME_COUNTER2" PMC 10  0x30A;
+   register "MSR_FLAME_COUNTER3" PMC 11  0x30B;
+   register "MSR_IQ_COUNTER0"    PMC 12  0x30C;
+   register "MSR_IQ_COUNTER1"    PMC 13  0x30D;
+   register "MSR_IQ_COUNTER2"    PMC 14  0x30E;
+   register "MSR_IQ_COUNTER3"    PMC 15  0x30F;
+   register "MSR_IQ_COUNTER4"    PMC 16  0x310;
+   register "MSR_IQ_COUNTER5"    PMC 17  0x311;
+
+   register "MSR_BPU_CCCR0"     CCCR 0   0x360; 
+   register "MSR_BPU_CCCR1"     CCCR 1   0x361;
+   register "MSR_BPU_CCCR2"     CCCR 2   0x362;
+   register "MSR_BPU_CCCR3"     CCCR 3   0x363;
+   register "MSR_MS_CCCR0"      CCCR 4   0x364;
+   register "MSR_MS_CCCR1"      CCCR 5   0x365;
+   register "MSR_MS_CCCR2"      CCCR 6   0x366;
+   register "MSR_MS_CCCR3"      CCCR 7   0x367;
+   register "MSR_FLAME_CCCR0"   CCCR 8   0x368;
+   register "MSR_FLAME_CCCR1"   CCCR 9   0x369;
+   register "MSR_FLAME_CCCR2"   CCCR 10  0x36A;
+   register "MSR_FLAME_CCCR3"   CCCR 11  0x36B;
+   register "MSR_IQ_CCCR0"      CCCR 12  0x36C;
+   register "MSR_IQ_CCCR1"      CCCR 13  0x36D;
+   register "MSR_IQ_CCCR2"      CCCR 14  0x36E;
+   register "MSR_IQ_CCCR3"      CCCR 15  0x36F;
+   register "MSR_IQ_CCCR4"      CCCR 16  0x370;
+   register "MSR_IQ_CCCR5"      CCCR 17  0x371;
+
+   register "MSR_BSU_ESCR0"     ESCR 0   0x3A0;
+   register "MSR_FSB_ESCR0"     ESCR 1   0x3A2;
+   register "MSR_MOB_ESCR0"     ESCR 2   0x3AA;
+   register "MSR_PMH_ESCR0"     ESCR 3   0x3AC;
+   register "MSR_BPU_ESCR0"     ESCR 4   0x3B2;
+   register "MSR_IS_ESCR0"      ESCR 5   0x3B4;
+   register "MSR_ITLB_ESCR0"    ESCR 6   0x3B6;
+   register "MSR_IX_ESCR0"      ESCR 7   0x3C8;
+
+   register "MSR_BSU_ESCR1"     ESCR 8   0x3A1;
+   register "MSR_FSB_ESCR1"     ESCR 9   0x3A3;
+   register "MSR_MOB_ESCR1"     ESCR 10  0x3AB;
+   register "MSR_PMH_ESCR1"     ESCR 11  0x3AD;
+   register "MSR_BPU_ESCR1"     ESCR 12  0x3B3;
+   register "MSR_IS_ESCR1"      ESCR 13  0x3B5;
+   register "MSR_ITLB_ESCR1"    ESCR 14  0x3B7;
+   register "MSR_IX_ESCR1"      ESCR 15  0x3C9;
+
+   register "MSR_MS_ESCR0"      ESCR 16  0x3C0;
+   register "MSR_TBPU_ESCR0"    ESCR 17  0x3C2;
+   register "MSR_TC_ESCR0"      ESCR 18  0x3C4;
+
+   register "MSR_MS_ESCR1"      ESCR 19  0x3C1;
+   register "MSR_TBPU_ESCR1"    ESCR 20  0x3C3;
+   register "MSR_TC_ESCR1"      ESCR 21  0x3C5;
+
+   register "MSR_FIRM_ESCR0"    ESCR 22  0x3A4;
+   register "MSR_FLAME_ESCR0"   ESCR 23  0x3A6;
+   register "MSR_DAC_ESCR0"     ESCR 24  0x3A8;
+   register "MSR_SAAT_ESCR0"    ESCR 25  0x3AE;
+   register "MSR_U2L_ESCR0"     ESCR 26  0x3B0;
+
+   register "MSR_FIRM_ESCR1"    ESCR 27  0x3A5;
+   register "MSR_FLAME_ESCR1"   ESCR 28  0x3A7;
+   register "MSR_DAC_ESCR1"     ESCR 29  0x3A9;
+   register "MSR_SAAT_ESCR1"    ESCR 30  0x3AF;
+   register "MSR_U2L_ESCR1"     ESCR 31  0x3B1;
+
+   register "MSR_CRU_ESCR0"     ESCR 32  0x3B8;
+   register "MSR_CRU_ESCR2"     ESCR 33  0x3CC;
+   register "MSR_CRU_ESCR4"     ESCR 34  0x3E0;
+   register "MSR_IQ_ESCR0"      ESCR 35  0x3BA;
+   register "MSR_RAT_ESCR0"     ESCR 36  0x3BC;
+   register "MSR_SSU_ESCR0"     ESCR 37  0x3BE;
+   register "MSR_ALF_ESCR0"     ESCR 38  0x3CA;
+   
+   register "MSR_CRU_ESCR1"     ESCR 39  0x3B9;
+   register "MSR_CRU_ESCR3"     ESCR 40  0x3CD;
+   register "MSR_CRU_ESCR5"     ESCR 41  0x3E1;
+   register "MSR_IQ_ESCR1"      ESCR 42  0x3BB;
+   register "MSR_RAT_ESCR1"     ESCR 43  0x3BD;
+   register "MSR_ALF_ESCR1"     ESCR 44  0x3CB;
+
+   # an event set contains the register sets that can be used to configure
+   # each of the events listed in the event set.  The events follow the register
+   # sets listing.
+   event_set {
+      reg_set "MSR_FSB_ESCR0", "MSR_BPU_COUNTER0", "MSR_BPU_CCCR0";
+      reg_set "MSR_FSB_ESCR0", "MSR_BPU_COUNTER1", "MSR_BPU_CCCR1";
+      reg_set "MSR_FSB_ESCR1", "MSR_BPU_COUNTER2", "MSR_BPU_CCCR2";
+      reg_set "MSR_FSB_ESCR1", "MSR_BPU_COUNTER3", "MSR_BPU_CCCR3";
+
+      event "global_power_events" 
+         "Accumulates the time during which a processor is not stopped."
+         conf_escr 0x2600020C conf_cccr	0x0003C000 conf_pmc 0x0;
+   };
+   
+   event_set {
+      reg_set "MSR_ITLB_ESCR0", "MSR_BPU_COUNTER0", "MSR_BPU_CCCR0";
+      reg_set "MSR_ITLB_ESCR0", "MSR_BPU_COUNTER1", "MSR_BPU_CCCR1";
+      reg_set "MSR_ITLB_ESCR1", "MSR_BPU_COUNTER2", "MSR_BPU_CCCR2";
+      reg_set "MSR_ITLB_ESCR1", "MSR_BPU_COUNTER3", "MSR_BPU_CCCR3";
+
+      event "ITLB_reference" 
+         "Counts translations using the Instruction Translation Look-aside Buffer."
+         conf_escr 0x3000040C conf_cccr 0x00036000 conf_pmc 0x0;
+   };
+
+   event_set {
+      reg_set "MSR_CRU_ESCR0", "MSR_IQ_COUNTER0", "MSR_IQ_CCCR0";
+      reg_set "MSR_CRU_ESCR0", "MSR_IQ_COUNTER1", "MSR_IQ_CCCR1";
+      reg_set "MSR_CRU_ESCR0", "MSR_IQ_COUNTER4", "MSR_IQ_CCCR4";
+      reg_set "MSR_CRU_ESCR1", "MSR_IQ_COUNTER2", "MSR_IQ_CCCR2";
+      reg_set "MSR_CRU_ESCR1", "MSR_IQ_COUNTER3", "MSR_IQ_CCCR3";
+      reg_set "MSR_CRU_ESCR1", "MSR_IQ_COUNTER5", "MSR_IQ_CCCR5";
+
+      event "instr_retired" 
+         "Counts bogus untagged and nonbogus untagged instructions retired during a clock cycle"
+         conf_escr 0x04000A0C conf_cccr 0x00038000 conf_pmc 0x0;
+
+      event "instr_completed" 
+         "Counts bogus and nonbogus intstructions that have completed and retired in a clock cycle"
+         conf_escr 0x0E00060C conf_cccr 0x00038000 conf_pmc 0x0;
+   };
+};
+

@@ -1,0 +1,28 @@
+# Object files
+*.o
+
+####################
+# arum
+####################
+
+# Build products
+/arum/byHand-parse-test/Arum
+/arum/hwCtr-test/test-module
+
+
+#####################
+# tiptop
+#####################
+
+# Created by configure
+/tiptop/config.*
+/tiptop/Makefile
+/tiptop/src/Makefile
+
+# Flex and Bison products
+/tiptop/src/lex.yy.c
+/tiptop/src/y.tab.[ch]
+
+# Build products
+/tiptop/src/ptiptop
+/tiptop/src/tiptop

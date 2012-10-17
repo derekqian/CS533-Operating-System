@@ -1,0 +1,39 @@
+
+arch "internalName" "AuthenticAMD" 15 65 {
+   size_ctr	48;               #Size of counters
+   type_nonctr	ESCR;             #This arch uses ESCR non-counter
+   type_enable	ESCR;             #The type of register used to start counting
+   conf_enable	0x00400000;       #The bits that are to be set to start counting
+
+   ## register "name" REGTYPE number addr;
+   register "PerfEvtSel0" ESCR 0 0xC0010000;
+   register "PerfEvtSel1" ESCR 1 0xC0010001; 
+   register "PerfEvtSel2" ESCR 2 0xC0010002;
+   register "PerfEvtSel3" ESCR 3 0xC0010003;
+   register "PerfCtr0"    PMC  0 0xC0010004;
+   register "PerfCtr0"    PMC  1 0xC0010005;
+   register "PerfCtr0"    PMC  2 0xC0010006;
+   register "PerfCtr0"    PMC  3 0xC0010007;
+
+   # an event set contains the register sets that can be used to configure
+   event_set {
+      reg_set "PerfEvtSel0", "PerfCtr0";
+      reg_set "PerfEvtSel1", "PerfCtr1";
+      reg_set "PerfEvtSel2", "PerfCtr2";
+      reg_set "PerfEvtSel3", "PerfCtr3"; 
+
+      ##The events 
+      event "dcache_accesses"  
+         "The number of accesses to the data cache for load and store references"
+         conf_escr 0x000B0028 conf_pmc 0x0;
+
+      event "dcache_misses" 
+         "The number of data cache references which missed in the data cache."
+         conf_escr 0x000B0029 conf_pmc 0x0;
+
+      event "retired_instructions" 
+         "Number of instructions retired, excluding exceptions and interrupts"
+         conf_escr 0x000B00C0 conf_pmc 0x0;	
+   }
+};
+

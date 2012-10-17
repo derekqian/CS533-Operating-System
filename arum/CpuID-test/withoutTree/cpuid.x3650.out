@@ -1,0 +1,22 @@
+ferdinand:/projects/arum/src-20070718/CpuID-test # ./cpuid
+Test CPUID instruction.
+lsfn   = 6
+vendor = GenuineIntel
+a.fields.stepping        = 0x4
+a.fields.model           = 0x6
+a.fields.family          = 0xf
+a.fields.res0            = 0x0
+a.fields.extended_model  = 0x0
+a.fields.extended_family = 0x0
+a.fields.res1            = 0x0
+
+this->stepping           = 0x4
+this->model              = 0x6
+this->family             = 0xf
+
+eax = 0x00000f64
+ebx = 0x03040800
+ecx = 0x0000e4bd
+edx = 0xbfebfbff
+
+End of Test CPUID.
