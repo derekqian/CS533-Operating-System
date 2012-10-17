@@ -1,0 +1,19 @@
+You have all been assigned to your first choice project, 1B, Application measurement and TipTop/Arum.  
+
+We have setup repositories for these tools at:
+
+Arum: http://web.cecs.pdx.edu/~cs533acc/arum.git
+TipTop: http://web.cecs.pdx.edu/~cs533acc/tiptop.git
+
+Students can get a working copy of the software by using git to clone the repository:
+
+$ git clone <URL>
+
+If they want to collaborate using GitHub, students should clone one of the repositories locally and then push to a repository GitHub. 
+
+Both of these software packages build on the CS LInux Lab machines.
+
+I am assigning Deron Jensen as the project leader.  
+I am assigning Amritha, Paul, and Sisinty as the test group.  You three have the challenging task of designing and implementing some testing benchmarks that will be used to test out the group's work.  Please use python for scripting.
+
+For questions related to the repositories and software setup, please email Heath (harrel2@pdx.edu)
