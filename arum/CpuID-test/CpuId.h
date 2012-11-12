@@ -4,7 +4,7 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
-//#define DEBUG_CPU
+#define DEBUG_CPU
 
 struct baseCpuid {
     int cpuid_enabled;     // is CPUID enabled on this machine
