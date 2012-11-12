@@ -25,10 +25,10 @@ void foo(void) {
   printf("foo\n");
   t1 = times(&time1);
   volatile int uv = 0;
-  for(i=0; i<100000000; i++) {
+  for(i=0; i<20000000; i++) {
     uv++;
   }
-  for(i=0; i<1000000; i++) {
+  for(i=0; i<200000; i++) {
     int fd = open("temp.txt", O_CREAT, S_IWUSR);
     write(fd, &i, sizeof(i));
     close(fd);
@@ -41,10 +41,10 @@ int main(void) {
   int i;
   printf("hello, world!\n");
   volatile int uv = 0;
-  for(i=0; i<100000000; i++) {
+  for(i=0; i<20000000; i++) {
     uv++;
   }
-  for(i=0; i<1000000; i++) {
+  for(i=0; i<200000; i++) {
     int fd = open("temp.txt", O_CREAT, S_IWUSR);
     write(fd, &i, sizeof(i));
     close(fd);
