@@ -11,7 +11,7 @@ binpro.o: binpro.C
 	$(CC) -g -fPIC -c $(CFLAGS) -I./include binpro.C
 
 test : test.o
-	$(CC) $(CXXFLAGS) test.o -L./lib -lbinpro -liberty -o test
+	$(CC) $(CXXFLAGS) -rdynamic -o test test.o -L./lib -lbinpro -Wl,--whole-archive -liberty -Wl,--no-whole-archive
 
 test.o: test.C
 	$(CC) -g -c $(CFLAGS) -I./include test.C
